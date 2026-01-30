@@ -25,10 +25,42 @@ typedef struct {
 	long count;
 } FileType;
 
+typedef struct {
+	const char *ext;
+	const char *line;
+	const char *block_start;
+	const char *block_end;
+} CommentRule;
+
+typedef enum {
+	LINE_EMPTY,
+	LINE_COMMENT,
+	LINE_CODE
+} LineType;
+
 /* ---------- globals ---------- */
 
 static FileType types[MAX_TYPES];
 static int type_count = 0;
+
+/* ---------- comment rules ---------- */
+
+static CommentRule rules[] = {
+	{ "c",   "//", "/*", "*/" },
+	{ "h",   "//", "/*", "*/" },
+	{ "cpp", "//", "/*", "*/" },
+	{ "qml", "//", "/*", "*/" },
+	{ "js",  "//", "/*", "*/" },
+	{ "java","//", "/*", "*/" },
+	{ "py",  "#",  NULL, NULL },
+	{ "sh",  "#",  NULL, NULL },
+};
+
+#define RULE_COUNT (sizeof(rules) / sizeof(rules[0]))
+
+static CommentRule general_rule = {
+	NULL, "//", "/*", "*/"
+};
 
 /* ---------- utility ---------- */
 
@@ -42,7 +74,7 @@ int is_text_file(const char *path) {
 	
 	for (size_t i = 0; i < n; i++) {
 		if (buf[i] == 0)
-			return 0; /* binary */
+			return 0;
 	}
 	return 1;
 }
@@ -84,6 +116,8 @@ void count_file_type(const char *path) {
 	}
 }
 
+/* ---------- path helpers ---------- */
+
 void get_dirname(const char *path, char *out, size_t out_size) {
 	strncpy(out, path, out_size - 1);
 	out[out_size - 1] = 0;
@@ -95,7 +129,75 @@ void get_dirname(const char *path, char *out, size_t out_size) {
 		strcpy(out, ".");
 }
 
-/* ---------- line counting ---------- */
+/* ---------- comment rule lookup ---------- */
+
+const CommentRule *get_rule_for_file(const char *path) {
+	const char *dot = strrchr(path, '.');
+	if (!dot || dot == path)
+		return &general_rule;
+	
+	char ext[16];
+	strncpy(ext, dot + 1, sizeof(ext) - 1);
+	ext[sizeof(ext) - 1] = 0;
+	
+	for (char *p = ext; *p; p++)
+		*p = tolower((unsigned char)*p);
+	
+	for (size_t i = 0; i < RULE_COUNT; i++) {
+		if (strcmp(rules[i].ext, ext) == 0)
+			return &rules[i];
+	}
+	
+	return &general_rule;
+}
+
+/* ---------- line classifier ---------- */
+
+LineType classify_line(char *line, int *in_block, const CommentRule *r) {
+	char *p = line;
+	
+	if (is_blank(p))
+		return LINE_EMPTY;
+	
+	int code_seen = 0;
+	
+	while (*p) {
+		if (*in_block) {
+			if (r->block_end &&
+				strncmp(p, r->block_end, strlen(r->block_end)) == 0) {
+				*in_block = 0;
+			p += strlen(r->block_end);
+				} else {
+					p++;
+				}
+				continue;
+		}
+		
+		if (r->block_start &&
+			strncmp(p, r->block_start, strlen(r->block_start)) == 0) {
+			*in_block = 1;
+		p += strlen(r->block_start);
+		continue;
+			}
+			
+			if (r->line &&
+				strncmp(p, r->line, strlen(r->line)) == 0) {
+				return code_seen ? LINE_CODE : LINE_COMMENT;
+				}
+				
+				if (!isspace((unsigned char)*p))
+					code_seen = 1;
+		
+		p++;
+	}
+	
+	if (*in_block)
+		return LINE_COMMENT;
+	
+	return code_seen ? LINE_CODE : LINE_COMMENT;
+}
+
+/* ---------- file processing ---------- */
 
 void count_file(const char *path, Counts *total) {
 	if (!is_text_file(path))
@@ -104,55 +206,18 @@ void count_file(const char *path, Counts *total) {
 	FILE *f = fopen(path, "r");
 	if (!f) return;
 	
+	const CommentRule *rule = get_rule_for_file(path);
+	
 	Counts local = {0, 0, 0};
 	char line[MAX_LINE];
-	int in_block_comment = 0;
+	int in_block = 0;
 	
 	while (fgets(line, sizeof(line), f)) {
-		char *p = line;
+		LineType t = classify_line(line, &in_block, rule);
 		
-		if (is_blank(p)) {
-			local.empty++;
-			continue;
-		}
-		
-		int code_seen = 0;
-		int comment_only = 1;
-		
-		while (*p) {
-			if (in_block_comment) {
-				if (p[0] == '*' && p[1] == '/') {
-					in_block_comment = 0;
-					p += 2;
-				} else {
-					p++;
-				}
-				continue;
-			}
-			
-			if (p[0] == '/' && p[1] == '*') {
-				in_block_comment = 1;
-				p += 2;
-				continue;
-			}
-			
-			if (p[0] == '/' && p[1] == '/') {
-				break;
-			}
-			
-			if (!isspace((unsigned char)*p)) {
-				code_seen = 1;
-				comment_only = 0;
-			}
-			p++;
-		}
-		
-		if (in_block_comment && comment_only)
-			local.comment++;
-		else if (code_seen)
-			local.code++;
-		else
-			local.comment++;
+		if (t == LINE_EMPTY)   local.empty++;
+		if (t == LINE_COMMENT) local.comment++;
+		if (t == LINE_CODE)    local.code++;
 	}
 	
 	fclose(f);
@@ -170,16 +235,13 @@ void count_file(const char *path, Counts *total) {
 	get_dirname(out, curr_dir, sizeof(curr_dir));
 	
 	if (strcmp(curr_dir, last_dir) != 0) {
-		if (last_dir[0] != 0) {
-			printf("\n");   /* separate folders */
-		}
+		if (last_dir[0])
+			printf("\n");
 		strcpy(last_dir, curr_dir);
 	}
 	
-	
 	printf("%s | e-%ld cs-%ld co-%ld\n",
 		   out, local.empty, local.comment, local.code);
-	
 	
 	total->empty   += local.empty;
 	total->comment += local.comment;
@@ -206,7 +268,7 @@ void walk(const char *path, Counts *total) {
 	
 	struct dirent *ent;
 	
-	/* ---------- FIRST PASS: files ---------- */
+	/* files first */
 	while ((ent = readdir(dir))) {
 		if (ent->d_name[0] == '.')
 			continue;
@@ -214,15 +276,13 @@ void walk(const char *path, Counts *total) {
 		char full[4096];
 		snprintf(full, sizeof(full), "%s/%s", path, ent->d_name);
 		
-		if (stat(full, &st) == 0 && S_ISREG(st.st_mode)) {
+		if (stat(full, &st) == 0 && S_ISREG(st.st_mode))
 			count_file(full, total);
-		}
 	}
 	
-	/* rewind directory for second pass */
 	rewinddir(dir);
 	
-	/* ---------- SECOND PASS: subdirectories ---------- */
+	/* subdirs next */
 	while ((ent = readdir(dir))) {
 		if (ent->d_name[0] == '.')
 			continue;
@@ -230,14 +290,12 @@ void walk(const char *path, Counts *total) {
 		char full[4096];
 		snprintf(full, sizeof(full), "%s/%s", path, ent->d_name);
 		
-		if (stat(full, &st) == 0 && S_ISDIR(st.st_mode)) {
+		if (stat(full, &st) == 0 && S_ISDIR(st.st_mode))
 			walk(full, total);
-		}
 	}
 	
 	closedir(dir);
 }
-
 
 /* ---------- main ---------- */
 
@@ -249,7 +307,6 @@ int main(int argc, char **argv) {
 	
 	base_path = argv[1];
 	base_len = strlen(base_path);
-	
 	if (base_len > 1 && base_path[base_len - 1] == '/')
 		base_len--;
 	
@@ -258,9 +315,8 @@ int main(int argc, char **argv) {
 	walk(argv[1], &total);
 	
 	printf("\nFILES BY TYPE:\n");
-	for (int i = 0; i < type_count; i++) {
+	for (int i = 0; i < type_count; i++)
 		printf("%-6s %ld\n", types[i].ext, types[i].count);
-	}
 	
 	printf("\nTOTAL:\n");
 	printf("e-%ld cs-%ld co-%ld\n",
