@@ -74,6 +74,7 @@ static CommentRule rules[] = {
 	/* Markup: HTML, XML */
 	{ "html",   NULL, "<!--", "-->" },
 	{ "xml",    NULL, "<!--", "-->" },
+	{ "svg",    NULL, "<!--", "-->" },
 };
 
 
