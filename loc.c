@@ -143,14 +143,15 @@ void walk(const char *path, Counts *total) {
 	
 	struct dirent *ent;
 	while ((ent = readdir(dir))) {
-		if (strcmp(ent->d_name, ".") == 0 ||
-			strcmp(ent->d_name, "..") == 0)
+		/* ignore hidden files & folders */
+		if (ent->d_name[0] == '.')
 			continue;
 		
 		char full[4096];
 		snprintf(full, sizeof(full), "%s/%s", path, ent->d_name);
 		walk(full, total);
 	}
+	
 	closedir(dir);
 }
 
