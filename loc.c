@@ -46,15 +46,36 @@ static int type_count = 0;
 /* ---------- comment rules ---------- */
 
 static CommentRule rules[] = {
-	{ "c",   "//", "/*", "*/" },
-	{ "h",   "//", "/*", "*/" },
-	{ "cpp", "//", "/*", "*/" },
-	{ "qml", "//", "/*", "*/" },
-	{ "js",  "//", "/*", "*/" },
-	{ "java","//", "/*", "*/" },
-	{ "py",  "#",  NULL, NULL },
-	{ "sh",  "#",  NULL, NULL },
+	/* C-Style: Used by C, C++, Java, JS, TS, C#, Go, Rust, Swift, Kotlin, PHP */
+	{ "c",      "//", "/*", "*/" },
+	{ "cpp",    "//", "/*", "*/" },
+	{ "cs",     "//", "/*", "*/" },   // C#
+	{ "go",     "//", "/*", "*/" },   // Go (Golang)
+	{ "java",   "//", "/*", "*/" },
+	{ "js",     "//", "/*", "*/" },   // JavaScript
+	{ "kt",     "//", "/*", "*/" },   // Kotlin
+	{ "php",    "//", "/*", "*/" },   // PHP (also supports #)
+	{ "rs",     "//", "/*", "*/" },   // Rust
+	{ "swift",  "//", "/*", "*/" },
+	{ "ts",     "//", "/*", "*/" },   // TypeScript
+	
+	/* Hash-Style: Used by Python, Ruby, Shell, Perl, R, YAML */
+	{ "py",     "#",  NULL, NULL },   // Python
+	{ "rb",     "#",  "=begin", "=end" }, // Ruby (has rare block syntax)
+	{ "sh",     "#",  NULL, NULL },   // Shell/Bash
+	{ "r",      "#",  NULL, NULL },   // R (Data Science)
+	{ "yml",    "#",  NULL, NULL },   // YAML Configuration
+	{ "txt",    "#",  NULL, NULL },
+	
+	/* Dash-Style: SQL, Lua */
+	{ "sql",    "--", "/*", "*/" },
+	{ "lua",    "--", "--[[", "]]" },
+	
+	/* Markup: HTML, XML */
+	{ "html",   NULL, "<!--", "-->" },
+	{ "xml",    NULL, "<!--", "-->" },
 };
+
 
 #define RULE_COUNT (sizeof(rules) / sizeof(rules[0]))
 
