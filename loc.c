@@ -7,6 +7,10 @@
 
 #define MAX_LINE 4096
 
+static const char *base_path = NULL;
+static size_t base_len = 0;
+
+
 typedef struct {
 	long empty;
 	long comment;
@@ -101,8 +105,18 @@ void count_file(const char *path, Counts *total) {
 	
 	fclose(f);
 	
+	const char *out = path;
+	
+	/* strip base path */
+	if (strncmp(path, base_path, base_len) == 0) {
+		out = path + base_len;
+		if (*out == '/')
+			out++;
+	}
+	
 	printf("%s | e-%ld cs-%ld co-%ld\n",
-		   path, local.empty, local.comment, local.code);
+		   out, local.empty, local.comment, local.code);
+	
 	
 	total->empty   += local.empty;
 	total->comment += local.comment;
@@ -148,13 +162,19 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	
-	Counts total = {0, 0, 0};
+	base_path = argv[1];
+	base_len = strlen(base_path);
 	
+	/* remove trailing slash */
+	if (base_len > 1 && base_path[base_len - 1] == '/')
+		base_len--;
+	
+	Counts total = {0, 0, 0};
 	walk(argv[1], &total);
 	
 	printf("\nTOTAL:\n");
 	printf("e-%ld cs-%ld co-%ld\n",
 		   total.empty, total.comment, total.code);
-	
 	return 0;
 }
+
