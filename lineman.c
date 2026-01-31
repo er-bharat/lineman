@@ -76,6 +76,9 @@ static size_t base_len = 0;
 
 static int path_column_width = 0;
 
+static int leader_toggle = 0;  /* 0 = dots, 1 = dashes */
+
+
 /* ============================================================
  *  Comment rules
  * ============================================================ */
@@ -281,16 +284,16 @@ static int compute_path_column_width(void) {
 	return available;
 }
 
-static void print_path_column(const char *path) {
-	size_t len = strlen(path);
-	
-	if ((int)len <= path_column_width) {
-		printf("%-*s", path_column_width, path);
-		return;
-	}
-	
-	printf("...%s", path + (len - (path_column_width - 3)));
-}
+// static void print_path_column(const char *path) {
+// 	size_t len = strlen(path);
+// 	
+// 	if ((int)len <= path_column_width) {
+// 		printf("%-*s", path_column_width, path);
+// 		return;
+// 	}
+// 	
+// 	printf("...%s", path + (len - (path_column_width - 3)));
+// }
 
 /* ============================================================
  *  File type tracking
@@ -406,6 +409,33 @@ static LineKind classify_line(
 	return code_seen ? LINE_CODE : LINE_COMMENT;
 }
 
+static void print_path_with_leader(const char *path) {
+	size_t len = strlen(path);
+	int visible;
+	
+	/* print (possibly truncated) path */
+	if ((int)len <= path_column_width) {
+		printf("%s", path);
+		visible = (int)len;
+	} else {
+		printf("...%s", path + (len - (path_column_width - 3)));
+		visible = path_column_width;
+	}
+	
+	int fill = path_column_width - visible;
+	if (fill < 1) fill = 1;
+	
+	putchar(' ');
+	
+	char ch = leader_toggle ? '-' : '.';
+	for (int i = 0; i < fill; i++)
+		putchar(ch);
+	
+	putchar(' ');
+}
+
+
+
 /* ============================================================
  *  File analysis
  * ============================================================ */
@@ -457,11 +487,15 @@ static void count_file(const char *path, LineCounts *total) {
 	}
 	
 	if (!suppress_file_output) {
-		print_path_column(out);
-		printf("  e-%6ld  cs-%6ld  co-%6ld\n",
+		print_path_with_leader(out);
+		printf("e-%6ld  cs-%6ld  co-%6ld\n",
 			   local.empty,
 		 local.comment,
 		 local.code);
+		
+		leader_toggle = !leader_toggle;
+		
+		
 	}
 	
 	total->empty   += local.empty;
@@ -526,6 +560,8 @@ static void walk(const char *path, LineCounts *total) {
 	closedir(dir);
 }
 
+
+
 static void print_separator(void) {
 	int stats_width =
 	2 +
@@ -577,6 +613,9 @@ int main(int argc, char **argv) {
 	
 	printf("\n");
 	
+	leader_toggle = 0;
+	
+	
 	/* ---------- PASS 2: print files ---------- */
 	suppress_file_output = 0;
 	last_dir[0] = '\0';   /* reset grouping */
@@ -586,11 +625,13 @@ int main(int argc, char **argv) {
 	printf("\n");
 	print_separator();
 	
-	print_path_column("TOTAL");
-	printf("  e-%6ld  cs-%6ld  co-%6ld\n",
+	print_path_with_leader("TOTAL");
+	printf("e-%6ld  cs-%6ld  co-%6ld\n",
 		   total.empty,
 		total.comment,
 		total.code);
+	
+	
 	
 	return 0;
 }

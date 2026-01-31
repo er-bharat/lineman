@@ -9,7 +9,7 @@
 ## Look
 
 ``` 
-➥ ./lineman /home/bharat/Documents/martian/Win8/experiment/Vlog 
+ ➥ ./lineman /home/bharat/Documents/martian/Win8/experiment/Vlog 
 
 FILES BY TYPE:
   qml      2
@@ -21,19 +21,19 @@ FILES BY TYPE:
   json     1
   svg      1
 
-Main.qml                                                             e-    31  cs-    10  co-   137
-HudOverlay.qml                                                       e-    31  cs-     9  co-   257
-datas.ini                                                            e-     1  cs-     0  co-     7
-resources.qrc                                                        e-     0  cs-     0  co-     6
-Martian vlog.desktop                                                 e-     1  cs-     0  co-    12
-main.cpp                                                             e-    39  cs-     6  co-   176
-CMakeLists.txt                                                       e-     9  cs-     9  co-    26
-compile_commands.json                                                e-     0  cs-     0  co-    20
+Main.qml ............................... e-    31  cs-    10  co-   137
+HudOverlay.qml ------------------------- e-    31  cs-     9  co-   257
+datas.ini .............................. e-     1  cs-     0  co-     7
+resources.qrc -------------------------- e-     0  cs-     0  co-     6
+Martian vlog.desktop ................... e-     1  cs-     0  co-    12
+main.cpp ------------------------------- e-    39  cs-     6  co-   176
+CMakeLists.txt ......................... e-     9  cs-     0  co-    35
+compile_commands.json ------------------ e-     0  cs-     0  co-    20
 
-icons/drawing.svg                                                    e-     1  cs-     1  co-   392
+icons/drawing.svg ...................... e-     1  cs-     1  co-   392
 
---------------------------------------------------------------------------------------------------------
-TOTAL                                                                e-   113  cs-    35  co-  1033
+----------------------------------------------------------------------------
+TOTAL ---------------------------------- e-   113  cs-    26  co-  1042
 
 
 ```
