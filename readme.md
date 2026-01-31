@@ -9,22 +9,33 @@
 ## Look
 
 ``` 
-➥ ./lineman /home/bharat/Documents/martian/Win8/win/list-windows   
-CMakeLists.txt | e-10 cs-21 co-26  
-wlr-foreign-toplevel-management-unstable-v1-client-protocol.h | e-37 cs-359 co-219  
-wlr-foreign-toplevel-management-unstable-v1-protocol.c | e-13 cs-25 co-65  
-wlr-foreign-toplevel-management-unstable-v1.xml | e-42 cs-2 co-226  
-main.cpp | e-90 cs-62 co-393  
-  
-FILES BY TYPE:  
-txt    1  
-h      1  
-c      1  
-xml    1  
-cpp    1  
-  
-TOTAL:   
-e-192 cs-469 co-929 
+➥ ./lineman /home/bharat/Documents/martian/Win8/experiment/Vlog 
+
+FILES BY TYPE:
+  qml      2
+  ini      1
+  qrc      1
+  desktop  1
+  cpp      1
+  txt      1
+  json     1
+  svg      1
+
+Main.qml                                                             e-    31  cs-    10  co-   137
+HudOverlay.qml                                                       e-    31  cs-     9  co-   257
+datas.ini                                                            e-     1  cs-     0  co-     7
+resources.qrc                                                        e-     0  cs-     0  co-     6
+Martian vlog.desktop                                                 e-     1  cs-     0  co-    12
+main.cpp                                                             e-    39  cs-     6  co-   176
+CMakeLists.txt                                                       e-     9  cs-     9  co-    26
+compile_commands.json                                                e-     0  cs-     0  co-    20
+
+icons/drawing.svg                                                    e-     1  cs-     1  co-   392
+
+--------------------------------------------------------------------------------------------------------
+TOTAL                                                                e-   113  cs-    35  co-  1033
+
+
 ```
 ## features
 
